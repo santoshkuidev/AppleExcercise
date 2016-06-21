@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="angular.min.js"></script>
+
+<title>Apple</title>
+</head>
+<body>
+	<div ng-app="MyApp" >
+		<div ng-controller="Controller">
+			<div >
+				<label for="">Git Hub Project for Apple</label>
+				<input type="text" ng-model="username">
+			</div>
+			
+			<ul>
+				<li ng-repeat="event in events">
+				{{event.actor.login}} - {{event.repo.name}} - {{event.repo.url}}
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+<script>
+
+	//creating a github service
+	angular.module('Services',[])
+			.factory('githubService', function($http){
+				var runUserRequest = function(username){
+					return	$http({
+						method:'JSONP',
+						url: 'https://api.github.com/users/'+username+'/events?callback=JSON_CALLBACK'
+					})
+				};
+				
+				return{
+					event: function(username){
+						return runUserRequest(username);
+					}
+				}
+			});
+			
+	var app = angular.module('MyApp',['Services']);
+		app.controller('Controller', function($scope, $timeout, githubService){	
+			var timeout;
+			$scope.$watch('username', function(newUserName){
+				if(newUserName){
+					if(timeout) $timeout.cancel(timeout);
+					timeout = $timeout(function(){
+						
+						//using the service
+						githubService.event(newUserName).success(function(data, status){
+							$scope.events = data.data;
+						});
+					},400);
+				}
+			});
+		});
+
+</script>
+</html>
